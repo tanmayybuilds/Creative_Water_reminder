@@ -1,0 +1,48 @@
+{
+  "name": "lockin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:exe": "npm run build && node scripts/package_app.cjs",
+    "preview": "vite preview",
+    "test": "npx tsx tests/desktopWaterReminder.test.ts && npx tsx tests/raviPrototype.test.ts && npx tsx tests/waterReminder.test.ts && npx tsx tests/contentMode.test.ts && npx tsx tests/finalChoice.test.ts && npx tsx tests/exitMechanic.test.ts && npx tsx tests/strategicEscalation.test.ts && npx tsx tests/breakPromptUI.test.ts && npx tsx tests/breakSession.test.ts && npx tsx tests/transparentPipeline.test.ts && npx tsx tests/movementProfiles.test.ts && npx tsx tests/behaviorEngine.test.ts && npx tsx tests/memePlayer.test.ts && npx tsx tests/breakReminder.test.ts",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-notification": "^2.3.3",
+    "@tauri-apps/plugin-sql": "^2.4.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "dexie": "^4.0.9",
+    "dexie-react-hooks": "^1.1.7",
+    "framer-motion": "^11.11.10",
+    "lucide-react": "^0.453.0",
+    "motion": "^13.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.4",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@tauri-apps/cli": "^2.11.4",
+    "@types/node": "^20.17.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^6.1.0",
+    "autoprefixer": "^10.4.20",
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3",
+    "eslint": "^8.57.1",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "vite": "^8.2.2"
+  }
+}

@@ -1,0 +1,73 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Production & Build outputs
+/dist
+/build
+/release
+/out
+/.next/
+next-env.d.ts
+*.tsbuildinfo
+
+# Executables, Installers & Binary packages
+*.exe
+*.zip
+*.msi
+*.dll
+LOCKIN.exe
+TestServer.exe
+LOCKIN_Setup_x64.exe
+LOCKIN_Windows_x64.zip
+installer/LockinInstaller.iss
+src-tauri/target/
+/target/
+
+# Website & Landing page files
+index_forwebsite.html
+public/index_forwebsite.html
+
+# User data, local profiles & sensitive configurations
+.lockin_profile/
+**/.lockin_profile/
+.env
+.env.*
+!.env.example
+
+# Temporary media frames, scratch & dev tools
+public/temp_frames/
+scratch/
+tools/
+
+# Private / Scratch scripts containing host-specific paths
+scripts/deep_search_user_videos.mjs
+scripts/probe_downloads.mjs
+scripts/probe_source_edit.mjs
+scripts/probe_untitled*.mjs
+scripts/check_untitled*.mjs
+scripts/inspect_untitled*.mjs
+scripts/convert_untitled*.mjs
+scripts/encode_*
+scripts/extract_sample_frames.mjs
+scripts/get_exact_duration.mjs
+
+# Logs & Debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+debug.log
+
+# Testing & Coverage
+/coverage
+
+# Vercel & Cloud deployment caches
+.vercel
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
