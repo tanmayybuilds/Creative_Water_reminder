@@ -28,6 +28,8 @@ src-tauri/target/
 # Website & Landing page files
 index_forwebsite.html
 public/index_forwebsite.html
+website/
+/website/
 
 # User data, local profiles & sensitive configurations
 .lockin_profile/
