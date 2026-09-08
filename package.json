@@ -10,6 +10,7 @@
     "build:exe": "npm run build && node scripts/package_app.cjs",
     "preview": "vite preview",
     "test": "npx tsx tests/desktopWaterReminder.test.ts && npx tsx tests/raviPrototype.test.ts && npx tsx tests/waterReminder.test.ts && npx tsx tests/contentMode.test.ts && npx tsx tests/finalChoice.test.ts && npx tsx tests/exitMechanic.test.ts && npx tsx tests/strategicEscalation.test.ts && npx tsx tests/breakPromptUI.test.ts && npx tsx tests/breakSession.test.ts && npx tsx tests/transparentPipeline.test.ts && npx tsx tests/movementProfiles.test.ts && npx tsx tests/behaviorEngine.test.ts && npx tsx tests/memePlayer.test.ts && npx tsx tests/breakReminder.test.ts",
+    "test:watch": "npx tsx watch tests/desktopWaterReminder.test.ts",
     "tauri": "tauri"
   },
   "dependencies": {
