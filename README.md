@@ -1,232 +1,175 @@
-# 🌊 LOCKIN — Creative Water Reminder
+# LOCKIN: Creative Water Reminder
 
-> **An un-ignorable, culturally iconic desktop health companion engineered to destroy dehydration and screen fatigue for developers, creators, and power users.**
+A desktop water reminder application for developers and creators that replaces easily ignorable system notifications with animated, transparent desktop interventions.
 
-[![Tests](https://img.shields.io/badge/tests-169%2B%20passing-brightgreen.svg)](#testing)
-[![Electron](https://img.shields.io/badge/Electron-33.x-47848F.svg?logo=electron&logoColor=white)](#technology-stack)
-[![React](https://img.shields.io/badge/React-19.x-61DAFB.svg?logo=react&logoColor=black)](#technology-stack)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg?logo=typescript&logoColor=white)](#technology-stack)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20x64-blue.svg?logo=windows)](#installation)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
+[![Electron](https://img.shields.io/badge/Electron-Desktop-47848F.svg)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-Bundler-646CFF.svg)](https://vitejs.dev/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
----
+## Why I Built This
 
-## 🎯 Why This Project Exists & Why It Matters
+Like many developers, I regularly enter long periods of deep focus where I lose track of time. Hours pass while debugging or writing code, and I frequently forget to drink water.
 
-### The Problem: The Flow-State Dehydration Trap
-When software engineers, designers, and gamers enter deep flow, the brain's interoceptive awareness dims. You can spend 4 to 8 continuous hours staring at code or canvases without taking a single sip of water. 
+I tried several existing water reminder tools, but they all suffered from the same core problem: notification blindness. Standard Windows desktop notifications or quiet chimes are too easy to dismiss without thinking. After a few days, muscle memory takes over and you close the toast without ever leaving your chair or taking a sip.
 
-- **Cognitive Decline**: Clinical research proves that as little as **1% to 2% dehydration** leads to quantifiable drops in working memory, executive function, reaction time, and alertness.
-- **Physical Toll**: Chronic under-hydration triggers tension headaches, dry eyes, neck stiffness, and afternoon fatigue crashes.
-- **The Notification Failure**: Conventional water reminder apps rely on subtle system tray toasts, delicate chime sounds, or passive mobile badges. When you are debugging or shipping code, your brain quickly builds **notification blindness** — you dismiss the toast without even reading it.
+I wanted something that actually gets my attention without being a generic corporate popup. LOCKIN solves this by displaying a transparent video character that walks directly across the screen, displays a reminder banner in the center, and walks off. If you try to dismiss it by clicking the screen, the app intercepts your click and plays a humorous reaction clip reminding you to actually drink your water.
 
-### The Solution: Culturally Powered, Un-ignorable Dopamine Interventions
-**LOCKIN** replaces passive, ignorable pings with dynamic, transparent desktop meme interventions. Instead of an annoying corporate pop-up, a transparent, photorealistic meme character walks across your entire multi-monitor screen, dances, reveals an unfolding reminder banner, and gently commands you to drink water.
+## How It Works
 
-If you attempt to close or bypass the reminder prematurely, LOCKIN's multi-tier interruption engine reacts immediately with hilarious, pinpoint meme roasts that make staying hydrated memorable, fun, and impossible to forget.
+The application operates in a recurring cycle (defaulting to 30 minutes, customizable from 5 to 60 minutes).
 
----
+### 1. The Screen Traversal
+When the reminder interval triggers:
+* A transparent overlay appears over the desktop without minimizing or interrupting whatever application you are currently using.
+* The character enters from the right side of the screen, walking toward the center using a smooth cubic ease-in-out curve.
+* At the center of the screen, the character pauses and unfolds a reminder banner: "Drink Water Now".
+* After a short pause, the character continues walking off the left edge of the screen, and the overlay closes automatically.
 
-## 🎭 The 3-Meme Choreography & Use-Case Architecture
+### 2. The Interruption Handler
+If you attempt to bypass the reminder by clicking the screen:
+* First click: The walking animation freezes at its exact screen coordinate and video frame. An overlay clip opens in the center of the screen ("You Have To Do It!"). Once the clip finishes, the walking character unpauses from the exact spot and completes its walk.
+* Second click: If you click a second time during the same session, it triggers a second reaction clip ("What's Wrong With You?!"), resets the timer, and updates your session logs.
 
-LOCKIN's water reminder engine is engineered with a strict 3-tier sequence to balance playful motivation with firm accountability.
+### 3. The Control Dashboard
+A dedicated dashboard window allows you to:
+* Adjust the reminder interval (presets from 5 to 60 minutes, or custom intervals).
+* View a live countdown to the next reminder.
+* Track daily water consumption against a target goal.
+* Trigger a manual test reminder at any time to preview the animation.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Standby: 30-Minute Focus Countdown
-    Standby --> Traversal: Timer Fires (30 min)
-    
-    state Traversal {
-        [*] --> EnterRight: 0s - 6s (Walking Right to Center)
-        EnterRight --> CenterDance: 6s - 9s (Center Dance + "Drink Water" Banner)
-        CenterDance --> ExitLeft: 9s - 15s (Walking Center to Off-screen Left)
-        ExitLeft --> [*]: Complete (Overlay Closes)
-    }
+## Architecture and Technical Decisions
 
-    Traversal --> Interruption1: User Clicks Screen (1st Dismiss Attempt)
-    state Interruption1 {
-        [*] --> PauseMeme1: Freeze Time & (x, y) Position
-        PauseMeme1 --> PlayYouHaveToDoIt: Zero-Lag "You Have To Do It!"
-        PlayYouHaveToDoIt --> ResumeMeme1: Video Finishes -> Resume from Exact Coordinate
-    }
-    ResumeMeme1 --> Traversal
+### Multi-Window Electron Setup
+The app runs on Electron and is split into two distinct windows:
+1. Dashboard Window: A standard 520x760 window providing controls, timer status, and intake tracking.
+2. Overlay Window: A full-screen, borderless, transparent window positioned across the entire primary display work area. It is configured with `alwaysOnTop: true` and `level: 'screen-saver'` so it renders above all other applications, including code editors and terminals.
 
-    Traversal --> Interruption2: User Clicks Screen (2nd Dismiss Attempt)
-    state Interruption2 {
-        [*] --> PlayWhatsWrongWithYou: Instant "What's Wrong With You?!"
-        PlayWhatsWrongWithYou --> ForceFinish: Complete & Reset Cycle
-    }
-    ForceFinish --> Standby: Reset 30-Minute Timer
-```
+### Transparent Video Pipeline (VP9 with Alpha Channel)
+To achieve a character walking directly on the desktop without an ugly background box, I encoded the video assets using VP9 WebM with a native 8-bit alpha channel.
+* The video player uses CSS hardware transforms (`transform: translateZ(0)`) to ensure smooth 60 FPS rendering on modern GPUs.
+* Playback coordinates are calculated via `requestAnimationFrame` and synced directly with `video.currentTime`. This allows the application to pause and resume at the exact sub-second timestamp and screen coordinate if the user clicks to interrupt.
 
-### 1. Meme 1: The Traversal (Continuous 15-Second Choreography)
-- **Asset**: `water_ravi_final.webm` (Transparent VP9 with native Alpha channel).
-- **FPS & Sync**: Driven by a high-precision `requestAnimationFrame` loop tied directly to hardware video `currentTime`.
-- **Choreography Timeline**:
-  - `0.0s – 6.0s (Entry)`: Enters smoothly from beyond the right viewport edge ($X = 105vw$) and walks rhythmically toward the center of your screen ($X = 50vw$).
-  - `6.0s – 9.0s (Center Stage & Banner)`: Anchors at screen center. At `5.8s – 8.8s`, an animated glassmorphic banner unrolls beneath the character: **"Drink Water Now 💧"**.
-  - `9.0s – 15.0s (Exit)`: Resumes striding leftward, traversing all the way off-screen ($X = -25vw$). At 15 seconds, the overlay cleanly unmounts and closes.
+### Local Embedded HTTP Streaming Server
+Windows file protocol (`file://`) can cause buffering and range request limitations when seeking through WebM video files in Electron. To solve this, I added a lightweight internal Node.js HTTP server inside `electron/main.cjs`.
+* It binds to an ephemeral local port on `127.0.0.1`.
+* It handles HTTP 206 partial content range requests (`Content-Range` and `Accept-Ranges`), enabling instant scrubbing and zero-delay video decoding.
 
-### 2. Meme 2: The 1st Interruption ("You Have To Do It!")
-- **Asset**: `you_have_to_do_it.webm` (Hardware-accelerated fast decode).
-- **Trigger**: The user clicks anywhere on the transparent overlay during Meme 1 in an attempt to dismiss or evade the reminder.
-- **Mechanism**:
-  1. Instantly freezes Meme 1 at its exact sub-second video timestamp and screen pixel offset $(x, y)$.
-  2. Spawns an authoritative, crystal-clear video popup centered with a dark backdrop: **"You Have To Do It!"**.
-  3. Upon video completion, Meme 1 smoothly unpauses and resumes its walk from the exact coordinate and frame where it was paused.
+### Inter-Process Communication
+To keep the dashboard and the overlay synchronized without heavy IPC boilerplate, the application uses the standard `BroadcastChannel` API (`lockin_water_channel`). When a timer completes or a test trigger is pressed in the dashboard, the event is immediately received by the overlay window to initiate the animation sequence.
 
-### 3. Meme 3: The 2nd Interruption ("What's Wrong With You?!")
-- **Asset**: `whats_wrong_with_you.webm` (Hardware-accelerated fast decode).
-- **Trigger**: The user clicks a second time during the same reminder session.
-- **Mechanism**:
-  1. Instantly launches the ultimate roast video clip: **"What's Wrong With You?!"**.
-  2. When finished, concludes the reminder sequence, increments the session hydration metrics, restarts the 30-minute recurring countdown loop, and hides the overlay.
+### Chromium Autoplay Handling
+Chromium normally blocks media with audio from playing without prior user gesture, which would prevent background reminders from sounding when the overlay window is not focused. I configured the Electron main process with the `--autoplay-policy=no-user-gesture-required` command line switch, ensuring that reminders play reliably on schedule.
 
----
+## Tech Stack
 
-## ⚡ Technical Innovations
+* Runtime: Electron 33
+* Frontend: React 18, TypeScript, Tailwind CSS
+* State Management: Zustand
+* Animation: Framer Motion, requestAnimationFrame
+* Local Storage: SQLite / Dexie.js for persistent daily hydration logs
+* Build Tooling: Vite 8, Inno Setup 6 (Windows installer generation)
+* Testing: Vitest and custom TypeScript integration test suites
 
-### 🪟 Invisible Native Desktop Canvas (Electron Screen-Saver Layer)
-- Configured with `transparent: true`, `frame: false`, `alwaysOnTop: true`, `level: 'screen-saver'`, and `skipTaskbar: true`.
-- Allows the meme character to render directly over your IDE, browser, terminal, or full-screen applications without an opaque window border or gray background box.
-
-### 🎬 Native Alpha-Channel VP9 WebM Pipeline
-- Custom-encoded VP9 video with native 8-bit alpha transparency channels.
-- Employs `transform: translateZ(0)` and `will-change: transform, opacity` to guarantee buttery 60 FPS GPU-accelerated compositing with zero CPU spiking.
-
-### 📡 Low-Latency Inter-Window IPC (BroadcastChannel)
-- Seamless communication between the main **Dashboard Window** and the independent **Desktop Overlay Window** powered by the Web Standard `BroadcastChannel("lockin_water_channel")`.
-- Guarantees zero-lag manual test triggers, timer resets, and state hydration across processes.
-
-### 🛡️ Autoplay-Policy Hardened
-- Starts the Electron runtime with `--autoplay-policy=no-user-gesture-required`.
-- Eliminates Chromium's default background media restrictions so sound and animation fire reliably even when the overlay window doesn't hold input focus.
-
----
-
-## 🛠️ Technology Stack
-
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Desktop Runtime** | Electron 33.x | Multi-window lifecycle, transparent overlay, native display bounds |
-| **Frontend Framework** | React 19 + TypeScript | UI component structure, type safety, modular architecture |
-| **Styling & Design** | Tailwind CSS + Framer Motion | Sleek dark-mode dashboard, fluid entry/exit animations |
-| **State Management** | Zustand | Reactive timer state machine, interruption handling, persistence |
-| **Local Database** | Dexie.js (IndexedDB / SQLite) | Offline history, daily water tracking, streak records |
-| **Build & Bundler** | Vite 8.x + Inno Setup 6 | Instant HMR, tree-shaking, production 64-bit Windows EXE installer |
-| **Automated Testing** | Vitest 4.x | Unit and integration testing across timer, overlay, and behavior logic |
-
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-- **Windows 10 / 11 (64-bit)**
-- **Node.js**: v18.0.0 or higher
-- **npm**: v9.0.0 or higher
-- *(Optional for packaging installer)*: [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+* Windows 10 or 11 (64-bit)
+* Node.js v18.0.0 or higher
+* npm v9.0.0 or higher
+* Optional: Inno Setup 6 (required only if you want to compile the standalone installer executable)
 
-### 1. Clone the Repository
+### Installation
+Clone the repository and install dependencies:
+
 ```bash
 git clone https://github.com/tanmayybuilds/Creative_Water_reminder.git
 cd Creative_Water_reminder
-```
-
-### 2. Install Dependencies
-```bash
 npm install
 ```
 
-### 3. Run in Development Mode
-Launch the Vite development server along with the Electron desktop app:
+### Running in Development
+Start the Vite development server and launch the Electron application:
+
 ```bash
 npm run dev
 ```
 
----
+## Testing
 
-## 🧪 Testing
+The project includes unit and integration tests covering the reminder state machine, coordinate math, interruption escalation, and video timing logic.
 
-The repository features comprehensive automated test coverage validating state transitions, timer sequences, and overlay rendering.
+To run all automated test suites:
 
 ```bash
-# Run all automated test suites
 npm test
+```
 
-# Run tests with UI watcher
+To run the reminder watcher in watch mode:
+
+```bash
 npm run test:watch
 ```
 
-**Test Suites Include:**
-- `tests/desktopWaterReminder.test.ts` — Full lifecycle of the 30-minute reminder loop, state transitions, and event dispatches.
-- `tests/behaviorEngine.test.ts` — User interaction logic and distraction penalty calculations.
-- `tests/finalChoice.test.ts` — Choice dialogs and break session interactions.
-- `tests/transparentPipeline.test.ts` — WebM transparent format compliance and fallback sanity checks.
+Test suites cover:
+* `tests/desktopWaterReminder.test.ts`: Complete lifecycle of the reminder loop, timer states, and event dispatching.
+* `tests/behaviorEngine.test.ts`: User interaction handling and interruption mechanics.
+* `tests/movementProfiles.test.ts`: Coordinate calculation and easing curves across varying display resolutions.
+* `tests/transparentPipeline.test.ts`: Validation of WebM transparent video assets and fallback handling.
 
----
+## Packaging and Building
 
-## 📦 Building the Standalone Windows Installer
-
-To compile the production Vite bundle, assemble the Electron binary runtime, and build the 64-bit Windows Setup Installer (`.exe`):
+To build the production bundle and generate the standalone Windows installer:
 
 ```bash
 npm run build:exe
 ```
 
-### Build Artifacts:
-Upon completion, the distribution artifacts are generated in the `release/` directory:
-- **`release/LOCKIN_Setup_x64.exe`**: Complete standalone Windows Setup Wizard with desktop shortcut, start menu entry, and uninstaller.
-- **`release/LOCKIN_Windows_x64.zip`**: Portable standalone folder containing `LOCKIN.exe` ready to run without installation.
+This script performs three automated steps:
+1. Runs the TypeScript compiler and builds the optimized Vite client in `dist/`.
+2. Assembles the standalone application bundle with the Electron runtime inside `release/bundle/`.
+3. Compiles the Inno Setup script (`installer/LockinInstaller.iss`) into a production installer located at `release/LOCKIN_Setup_x64.exe`.
 
----
-
-## 📂 Project Structure
+## Project Structure
 
 ```
 Creative_Water_reminder/
 ├── electron/
-│   └── main.cjs                # Electron main process (Multi-window & IPC management)
+│   ├── main.cjs                # Main process (multi-window setup, HTTP server, flags)
+│   └── preload.cjs             # Preload script
 ├── installer/
-│   └── LockinInstaller.iss     # Inno Setup 6 script definition
+│   └── LockinInstaller.iss     # Inno Setup installer script
 ├── public/
 │   └── memes/
-│       └── processed/          # Transparent WebM video assets & interruption clips
+│       └── processed/          # Transparent VP9 WebM video clips and reaction media
 ├── scripts/
-│   └── package_app.cjs         # Automated 3-stage standalone build pipeline
+│   └── package_app.cjs         # Packaging script for building standalone bundle and installer
 ├── src/
-│   ├── components/             # Reusable UI widgets, cards, and modals
+│   ├── app/
+│   │   ├── App.tsx             # Root component (handles dashboard vs overlay mode)
+│   │   └── globals.css         # Styling and custom layout utilities
+│   ├── components/             # Reusable UI components
 │   ├── features/
-│   │   └── waterReminder/      # Core water reminder store, overlay & controls
-│   │       ├── waterReminderStore.ts    # Zustand timer state machine
-│   │       ├── waterReminderOverlay.tsx  # Transparent video & interruption UI
-│   │       └── waterReminderWidget.tsx   # Dashboard control widget
-│   ├── App.tsx                 # Main application entry
-│   └── index.css               # Global dark-theme styling
-├── tests/                      # Vitest unit & integration test suites
-├── package.json                # Project scripts and dependencies
-├── vite.config.ts              # Vite bundler configuration
-└── README.md                   # Project documentation
+│   │   └── waterReminder/      # Core reminder logic
+│   │       ├── waterReminderStore.ts      # Zustand state store and timer logic
+│   │       ├── waterReminderOverlay.tsx    # Transparent overlay and interruption component
+│   │       ├── waterReminderCard.tsx       # Dashboard controls and countdown card
+│   │       ├── waterReminderPosition.ts   # Screen geometry and movement easing
+│   │       └── CartoonTextUnfold.tsx      # Center banner animation
+│   └── database/
+│       └── db.ts               # Local SQLite database initialization
+├── tests/                      # Automated test suites
+├── package.json
+└── vite.config.ts
 ```
 
----
+## Key Challenges and What I Learned
 
-## 🤝 Contributing
+1. Window Transparency on Windows: Creating an Electron window that is both transparent and click-through when inactive, but capable of capturing input during interaction, requires careful management of `alwaysOnTop` levels (`screen-saver`) and window visibility states.
+2. WebM Alpha Channel Performance: Early iterations tried using canvas pixel manipulation or green screen keying in JavaScript, which was CPU heavy. Moving to natively encoded VP9 WebM with 8-bit alpha channels allowed direct GPU compositing at 60 FPS with negligible CPU overhead while idling.
+3. Accurate Resume Positioning: When an interruption clip plays, the walking character must freeze immediately. Tying the horizontal position calculation to `requestAnimationFrame` and reading `video.currentTime` allowed the app to freeze the character in place and resume without visual jumping.
 
-Contributions, feedback, and meme submissions are warmly welcome!
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## License
 
----
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-<p align="center">
-  Crafted with ❤️ and 💧 to keep developers healthy, focused, and locked in.
-</p>
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
