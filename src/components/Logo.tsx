@@ -54,60 +54,70 @@ export const Logo: React.FC<LogoProps> = ({
 
   const currentSize = sizeMap[size];
 
+  const [imgFailed, setImgFailed] = React.useState(false);
+
   const Emblem = (
     <div className={`relative flex items-center justify-center ${currentSize.icon} shrink-0 group`}>
       {/* Background ambient glow */}
       <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/40 via-teal-400/20 to-blue-600/40 rounded-2xl blur-md group-hover:blur-lg transition-all duration-300 pointer-events-none" />
 
-      {/* SVG Icon Emblem */}
-      <svg
-        viewBox="0 0 48 48"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="relative w-full h-full drop-shadow-[0_2px_10px_rgba(6,182,212,0.4)]"
-      >
-        <defs>
-          <linearGradient id="lockin-grad-primary" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#22d3ee" />
-            <stop offset="50%" stopColor="#06b6d4" />
-            <stop offset="100%" stopColor="#0284c7" />
-          </linearGradient>
-          <linearGradient id="lockin-grad-inner" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#67e8f9" />
-          </linearGradient>
-        </defs>
-
-        {/* Outer Shield Hexagon/Rounded Pill */}
-        <rect
-          x="4"
-          y="4"
-          width="40"
-          height="40"
-          rx="12"
-          fill="#0c121e"
-          stroke="url(#lockin-grad-primary)"
-          strokeWidth="2.5"
+      {!imgFailed ? (
+        <img
+          src="/icon.png"
+          alt="LOCKIN Logo"
+          onError={() => setImgFailed(true)}
+          className="relative w-full h-full object-contain rounded-xl drop-shadow-[0_2px_10px_rgba(6,182,212,0.4)]"
         />
+      ) : (
+        <svg
+          viewBox="0 0 48 48"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="relative w-full h-full drop-shadow-[0_2px_10px_rgba(6,182,212,0.4)]"
+        >
+          <defs>
+            <linearGradient id="lockin-grad-primary" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#22d3ee" />
+              <stop offset="50%" stopColor="#06b6d4" />
+              <stop offset="100%" stopColor="#0284c7" />
+            </linearGradient>
+            <linearGradient id="lockin-grad-inner" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="#67e8f9" />
+            </linearGradient>
+          </defs>
 
-        {/* Shackle */}
-        <path
-          d="M17 21V16C17 12.134 20.134 9 24 9C27.866 9 31 12.134 31 16V21"
-          stroke="url(#lockin-grad-inner)"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
+          {/* Outer Shield Hexagon/Rounded Pill */}
+          <rect
+            x="4"
+            y="4"
+            width="40"
+            height="40"
+            rx="12"
+            fill="#0c121e"
+            stroke="url(#lockin-grad-primary)"
+            strokeWidth="2.5"
+          />
 
-        {/* Water Droplet Lock Body */}
-        <path
-          d="M24 18C19 23.5 15 28 15 32.5C15 37.1944 19.0294 41 24 41C28.9706 41 33 37.1944 33 32.5C33 28 29 23.5 24 18Z"
-          fill="url(#lockin-grad-primary)"
-        />
+          {/* Shackle */}
+          <path
+            d="M17 21V16C17 12.134 20.134 9 24 9C27.866 9 31 12.134 31 16V21"
+            stroke="url(#lockin-grad-inner)"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
 
-        {/* Keyhole Spark in Center */}
-        <circle cx="24" cy="31" r="2.2" fill="#ffffff" />
-        <path d="M22.8 31.5L21.5 36.5H26.5L25.2 31.5H22.8Z" fill="#ffffff" />
-      </svg>
+          {/* Water Droplet Lock Body */}
+          <path
+            d="M24 18C19 23.5 15 28 15 32.5C15 37.1944 19.0294 41 24 41C28.9706 41 33 37.1944 33 32.5C33 28 29 23.5 24 18Z"
+            fill="url(#lockin-grad-primary)"
+          />
+
+          {/* Keyhole Spark in Center */}
+          <circle cx="24" cy="31" r="2.2" fill="#ffffff" />
+          <path d="M22.8 31.5L21.5 36.5H26.5L25.2 31.5H22.8Z" fill="#ffffff" />
+        </svg>
+      )}
     </div>
   );
 

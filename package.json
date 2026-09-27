@@ -1,15 +1,19 @@
 {
   "name": "lockin",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Water Reminder (Meme Edition) - Desktop Hydration Sentinel",
+  "author": "tanmay_chaudhary",
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:store": "node scripts/build_store.cjs",
+    "build:msix": "node scripts/build_store.cjs",
     "build:exe": "npm run build && node scripts/package_app.cjs",
     "preview": "vite preview",
-    "test": "npx tsx tests/desktopWaterReminder.test.ts && npx tsx tests/raviPrototype.test.ts && npx tsx tests/waterReminder.test.ts && npx tsx tests/contentMode.test.ts && npx tsx tests/finalChoice.test.ts && npx tsx tests/exitMechanic.test.ts && npx tsx tests/strategicEscalation.test.ts && npx tsx tests/breakPromptUI.test.ts && npx tsx tests/breakSession.test.ts && npx tsx tests/transparentPipeline.test.ts && npx tsx tests/movementProfiles.test.ts && npx tsx tests/behaviorEngine.test.ts && npx tsx tests/memePlayer.test.ts && npx tsx tests/breakReminder.test.ts",
+    "test": "npx tsx tests/productionHardening.test.ts && npx tsx tests/desktopWaterReminder.test.ts && npx tsx tests/raviPrototype.test.ts && npx tsx tests/waterReminder.test.ts && npx tsx tests/contentMode.test.ts && npx tsx tests/finalChoice.test.ts && npx tsx tests/exitMechanic.test.ts && npx tsx tests/strategicEscalation.test.ts && npx tsx tests/breakPromptUI.test.ts && npx tsx tests/breakSession.test.ts && npx tsx tests/transparentPipeline.test.ts && npx tsx tests/movementProfiles.test.ts && npx tsx tests/behaviorEngine.test.ts && npx tsx tests/memePlayer.test.ts && npx tsx tests/breakReminder.test.ts",
     "test:watch": "npx tsx watch tests/desktopWaterReminder.test.ts",
     "tauri": "tauri"
   },
@@ -31,6 +35,7 @@
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffmpeg-installer/win32-x64": "^4.1.0",
     "@ffprobe-installer/ffprobe": "^2.1.2",
     "@tauri-apps/cli": "^2.11.4",
     "@types/node": "^20.17.0",

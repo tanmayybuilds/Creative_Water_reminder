@@ -1,28 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { initDatabase } from "@/database/db";
+import { db } from "@/lib/db";
 import { WaterReminderCard, WaterReminderOverlay } from "@/features/waterReminder";
-import { Monitor, Database, CheckCircle2, ShieldCheck, Droplets, Sparkles } from "lucide-react";
+import { Monitor, Database, CheckCircle2, ShieldCheck, Droplets } from "lucide-react";
 
 export default function App() {
   const [dbReady, setDbReady] = useState(false);
-  const [isOverlayMode, setIsOverlayMode] = useState(false);
+  
+  // Hard synchronous check: Window is overlay ONLY if explicit flag is passed
+  const isOverlayMode = typeof window !== "undefined" && (
+    (window as any).electronAPI?.isOverlayWindow === true ||
+    new URLSearchParams(window.location.search).get("mode") === "overlay"
+  );
 
   useEffect(() => {
-    // Check if running in dedicated transparent desktop overlay mode
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("mode") === "overlay") {
-      setIsOverlayMode(true);
+    if (isOverlayMode) {
       document.documentElement.style.backgroundColor = "transparent";
       document.body.style.backgroundColor = "transparent";
       document.documentElement.classList.remove("bg-[#08080a]");
       document.body.classList.remove("bg-[#08080a]");
     }
 
-    // Initialize local SQLite database
-    initDatabase()
+    // Initialize local Dexie IndexedDB database
+    db.open()
       .then(() => setDbReady(true))
-      .catch((err) => console.error("Database initialization notice:", err));
-  }, []);
+      .catch((err) => {
+        console.warn("Dexie local persistence notice:", err);
+        setDbReady(true);
+      });
+  }, [isOverlayMode]);
 
   if (isOverlayMode) {
     return (
@@ -59,7 +64,7 @@ export default function App() {
           <span className="flex items-center gap-1.5 text-emerald-400/90">
             <Database className="w-3.5 h-3.5 text-emerald-500" />
             <CheckCircle2 className="w-3 h-3" />
-            {dbReady ? "SQLite Ready" : "SQLite Local"}
+            {dbReady ? "Local Storage Ready" : "Initializing Storage"}
           </span>
           <span className="text-zinc-700">•</span>
           <span className="flex items-center gap-1.5 text-zinc-400">
@@ -68,10 +73,6 @@ export default function App() {
           </span>
         </footer>
       </main>
-
-      {/* Local Preview Overlay for in-dashboard testing */}
-      <WaterReminderOverlay />
     </div>
   );
 }
-

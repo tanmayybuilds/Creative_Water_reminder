@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useWaterReminderStore } from "./waterReminderStore";
 import {
   getScreenGeometry,
@@ -44,6 +44,11 @@ interface WaterReminderOverlayProps {
 export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
   isDesktopOverlayWindow = false,
 }) => {
+  // HARD SAFETY GUARD: NEVER render or play any video unless running inside the dedicated desktop transparent overlay window!
+  if (!isDesktopOverlayWindow) {
+    return null;
+  }
+
   const {
     phase,
     activeMemeId,
@@ -66,7 +71,6 @@ export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
 
   // Current calculated X position for exact freeze-in-place
   const currentXRef = useRef<number>(0);
-  const [currentX, setCurrentX] = useState<number>(0);
 
   // Exact timestamp for pause/resume
   const savedTimeRef = useRef<number>(0);
@@ -102,24 +106,27 @@ export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
   // Initialize position to startXRel
   useEffect(() => {
     currentXRef.current = startXRel;
-    setCurrentX(startXRel);
+    if (actorContainerRef.current) {
+      actorContainerRef.current.style.transform = `translate3d(${startXRel}px, 0px, 0px)`;
+    }
   }, [startXRel]);
 
-  // Sync position with video playback time via requestAnimationFrame
+  // Sync position with video playback time via requestAnimationFrame with 0-render direct DOM transform
   const updatePosition = useCallback(() => {
     if (!videoRef.current || isMemePlaying) return;
 
     const t = videoRef.current.currentTime;
     const newX = calculateXForTime(t, startXRel, endXRel);
     currentXRef.current = newX;
-    setCurrentX(newX);
 
-    // Cartoon Text unfold trigger (during center stop 5.8s - 8.8s)
-    if (t >= 5.8 && t <= 8.8) {
-      setIsTextUnfolded(true);
-    } else {
-      setIsTextUnfolded(false);
+    // Direct GPU-accelerated DOM transform: Zero React re-render thrashing
+    if (actorContainerRef.current) {
+      actorContainerRef.current.style.transform = `translate3d(${newX}px, 0px, 0px)`;
     }
+
+    // Cartoon Text unfold trigger (during center stop 5.8s - 8.8s) - only update state when value changes
+    const shouldUnfold = t >= 5.8 && t <= 8.8;
+    setIsTextUnfolded((prev) => (prev !== shouldUnfold ? shouldUnfold : prev));
 
     if (!videoRef.current.paused && !videoRef.current.ended) {
       rafIdRef.current = requestAnimationFrame(updatePosition);
@@ -128,17 +135,16 @@ export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
 
   // Video timeupdate backup listener
   const handleVideoTimeUpdate = () => {
-    if (!videoRef.current || isMemePlaying) return;
+    if (!videoRef.current || isMemePlaying || rafIdRef.current) return;
     const t = videoRef.current.currentTime;
     const newX = calculateXForTime(t, startXRel, endXRel);
     currentXRef.current = newX;
-    setCurrentX(newX);
-
-    if (t >= 5.8 && t <= 8.8) {
-      setIsTextUnfolded(true);
-    } else {
-      setIsTextUnfolded(false);
+    if (actorContainerRef.current) {
+      actorContainerRef.current.style.transform = `translate3d(${newX}px, 0px, 0px)`;
     }
+
+    const shouldUnfold = t >= 5.8 && t <= 8.8;
+    setIsTextUnfolded((prev) => (prev !== shouldUnfold ? shouldUnfold : prev));
   };
 
   // Track trigger count to differentiate new starts vs resumes
@@ -150,16 +156,11 @@ export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
 
     // Bring Desktop Transparent Overlay on Top of All Other Apps when Reminder triggers
     if (isDesktopOverlayWindow) {
+      const api = typeof window !== "undefined" ? (window as unknown as { electronAPI?: { showOverlay?: () => Promise<boolean>; hideOverlay?: () => Promise<boolean> } }).electronAPI : undefined;
       if (isVisible) {
-        try {
-          fetch("/api/overlay/show").catch(() => {});
-          fetch("/api/window/topmost").catch(() => {});
-        } catch (e) {}
+        api?.showOverlay?.()?.catch(() => {});
       } else {
-        try {
-          fetch("/api/overlay/hide").catch(() => {});
-          fetch("/api/window/normal").catch(() => {});
-        } catch (e) {}
+        api?.hideOverlay?.()?.catch(() => {});
       }
     }
 
@@ -175,10 +176,15 @@ export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
     }
 
     if (!isVisible) {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
       if (rafIdRef.current) {
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
       }
+      setIsTextUnfolded(false);
       return;
     }
 
@@ -187,7 +193,9 @@ export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
       lastTriggeredRef.current = totalRemindersTriggered;
       videoRef.current.currentTime = 0;
       currentXRef.current = startXRel;
-      setCurrentX(startXRel);
+      if (actorContainerRef.current) {
+        actorContainerRef.current.style.transform = `translate3d(${startXRel}px, 0px, 0px)`;
+      }
       setIsTextUnfolded(false);
       savedTimeRef.current = 0;
 
@@ -207,7 +215,9 @@ export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
       videoRef.current.currentTime = savedTimeRef.current;
       const resumeX = calculateXForTime(savedTimeRef.current, startXRel, endXRel);
       currentXRef.current = resumeX;
-      setCurrentX(resumeX);
+      if (actorContainerRef.current) {
+        actorContainerRef.current.style.transform = `translate3d(${resumeX}px, 0px, 0px)`;
+      }
 
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
@@ -288,81 +298,78 @@ export const WaterReminderOverlay: React.FC<WaterReminderOverlayProps> = ({
               <span>TIME-SYNCHRONIZED POSITION ENGINE</span>
             </div>
             <div>SCREEN: {screen.width}×{screen.height} (DPR: {screen.devicePixelRatio})</div>
-            <div>CURRENT X: {Math.round(currentX)}px (Relative)</div>
+            <div>CURRENT X: {Math.round(currentXRef.current)}px (Relative)</div>
             <div>SAVED TIME: {savedTimeRef.current.toFixed(2)}s</div>
             <div>PHASE: {phase}</div>
           </div>
         </div>
       )}
 
-      {/* 2. Ravi Kishan Overlay — Position is STRICTLY BOUND to video timestamp */}
-      <AnimatePresence>
-        {isVisible && (
-          <div className="fixed inset-0 w-screen h-screen flex items-center justify-center pointer-events-none z-40">
-            <div
-              ref={actorContainerRef}
-              onClick={isMemePlaying ? undefined : handleActorClick}
-              className={`relative flex flex-col items-center justify-center cursor-pointer group ${
-                isMemePlaying ? "pointer-events-none" : "pointer-events-auto"
-              }`}
-              style={{
-                transform: `translate3d(${currentX}px, 0px, 0px)`,
-                transformOrigin: "center center",
-                willChange: "transform",
-                transition: isMemePlaying ? "none" : "transform 0.05s linear",
-              }}
-            >
-              {/* Animated Text ("Drink Water Now 💧") positioned right above Ravi's raised hand */}
-              <div className="absolute top-[2%] left-[64%] sm:left-[68%] z-40 flex items-center justify-start pointer-events-none whitespace-nowrap">
-                <CartoonTextUnfold isVisible={isTextUnfolded && !isMemePlaying} text="Drink Water Now 💧" />
-              </div>
-
-              {/* Transparent WebM Video — 15% Larger (max-w-[575px] max-h-[92vh]) */}
-              <video
-                ref={videoRef}
-                src="/memes/processed/water_ravi_final.webm"
-                muted={!isDesktopOverlayWindow}
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLVideoElement;
-                  if (!target.src.includes("ravi_dance.webm")) {
-                    target.src = "/memes/processed/ravi_dance.webm";
-                  }
-                }}
-                onTimeUpdate={handleVideoTimeUpdate}
-                onPlay={() => {
-                  if (!isMemePlaying) {
-                    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
-                    rafIdRef.current = requestAnimationFrame(updatePosition);
-                  }
-                }}
-                onPause={() => {
-                  if (rafIdRef.current) {
-                    cancelAnimationFrame(rafIdRef.current);
-                    rafIdRef.current = null;
-                  }
-                }}
-                onEnded={() => {
-                  setIsTextUnfolded(false);
-                  handleSequenceCompleted();
-                }}
-                playsInline
-                controls={false}
-                className="max-w-[575px] max-h-[92vh] w-auto h-auto object-contain bg-transparent border-0 outline-none shadow-none"
-                style={{
-                  backgroundColor: "transparent",
-                  mixBlendMode: "normal",
-                  transform: "translateZ(0)",
-                  willChange: "transform, opacity",
-                  backfaceVisibility: "hidden",
-                  isolation: "isolate",
-                  imageRendering: "auto",
-                  contain: "layout paint",
-                }}
-              />
+      {/* 2. Ravi Kishan Overlay — Strictly Single Instance Bound to Video Timestamp */}
+      {isVisible && (
+        <div key="single-ravi-overlay" className="fixed inset-0 w-screen h-screen flex items-center justify-center pointer-events-none z-40">
+          <div
+            ref={actorContainerRef}
+            onClick={isMemePlaying ? undefined : handleActorClick}
+            className={`relative flex flex-col items-center justify-center cursor-pointer group ${
+              isMemePlaying ? "pointer-events-none" : "pointer-events-auto"
+            }`}
+            style={{
+              transformOrigin: "center center",
+              willChange: "transform",
+              backfaceVisibility: "hidden",
+            }}
+          >
+            {/* Animated Text ("Drink Water Now 💧") positioned right above Ravi's raised hand */}
+            <div className="absolute top-[2%] left-[64%] sm:left-[68%] z-40 flex items-center justify-start pointer-events-none whitespace-nowrap">
+              <CartoonTextUnfold isVisible={isTextUnfolded && !isMemePlaying} text="Drink Water Now 💧" />
             </div>
+
+            {/* Transparent WebM Video — Single Guaranteed Stream */}
+            <video
+              ref={videoRef}
+              src="/memes/processed/water_ravi_final.webm"
+              muted={!isDesktopOverlayWindow}
+              onError={(e) => {
+                const target = e.currentTarget as HTMLVideoElement;
+                if (!target.src.includes("ravi_dance.webm")) {
+                  target.src = "/memes/processed/ravi_dance.webm";
+                }
+              }}
+              onTimeUpdate={handleVideoTimeUpdate}
+              onPlay={() => {
+                if (!isMemePlaying) {
+                  if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+                  rafIdRef.current = requestAnimationFrame(updatePosition);
+                }
+              }}
+              onPause={() => {
+                if (rafIdRef.current) {
+                  cancelAnimationFrame(rafIdRef.current);
+                  rafIdRef.current = null;
+                }
+              }}
+              onEnded={() => {
+                setIsTextUnfolded(false);
+                handleSequenceCompleted();
+              }}
+              playsInline
+              controls={false}
+              className="max-w-[575px] max-h-[92vh] w-auto h-auto object-contain bg-transparent border-0 outline-none shadow-none"
+              style={{
+                backgroundColor: "transparent",
+                mixBlendMode: "normal",
+                transform: "translateZ(0)",
+                willChange: "transform, opacity",
+                backfaceVisibility: "hidden",
+                isolation: "isolate",
+                imageRendering: "auto",
+                contain: "layout paint",
+              }}
+            />
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
       {/* 3. Interruption Memes — 60 FPS Crystal-Clear Hardware-Accelerated Zero-Lag Video */}
       <div
