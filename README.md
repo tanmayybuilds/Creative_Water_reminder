@@ -1,125 +1,174 @@
-# LOCKIN: Water Reminder (Meme Edition)
+# Water Reminder (Meme Edition)
 
-A high-performance Windows 10/11 desktop water reminder application that replaces easily ignorable toast notifications with animated, transparent desktop interventions, unignorable reaction clips, and persistent local hydration tracking.
+A lightweight Windows desktop hydration sentinel that replaces easily dismissed notification toasts with unignorable, transparent character interventions. Built on Electron, React, and hardware-accelerated VP9 alpha video rendering.
 
-[![Electron](https://img.shields.io/badge/Electron-44.0-47848F.svg)](https://www.electronjs.org/)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6.svg)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.2-646CFF.svg)](https://vitejs.dev/)
-[![Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-MSIX%20x64-0078D7.svg)](https://partner.microsoft.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Platform: Windows 10/11](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-blue.svg)](#system-requirements)
+[![Architecture: Electron + React](https://img.shields.io/badge/Stack-Electron%20%7C%20React%2018%20%7C%20TypeScript-informational.svg)](#technical-architecture)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-## Why LOCKIN Exists
+## Overview
 
-During long coding or gaming sessions, developers experience **notification blindness**. Standard Windows notification toasts or subtle chimes are dismissed automatically via muscle memory without taking a sip of water.
+Traditional notification banners suffer from immediate dismissal reflex: users close toasts automatically without actually pausing to hydrate. 
 
-**LOCKIN** solves this by rendering a transparent walking character directly across your desktop screen at scheduled intervals. The character walks into the center of the display, unfolds a reminder banner, and walks off. If you attempt to click through or dismiss it, the application intercepts your click and plays an escalating comedic meme reaction reminding you to drink your water before resuming cleanly.
+**Water Reminder (Meme Edition)** solves this through scheduled, transparent desktop traversals:
+* At configured intervals, a transparent, borderless overlay renders across the primary work area without stealing keyboard focus or minimizing active fullscreen applications.
+* An animated character walks across the screen, pauses to present the hydration prompt, and exits cleanly.
+* Clicking the character intercepts dismissal attempts and triggers contextual reaction sequences before resetting the timer.
+* Operates **100% offline** with zero telemetry, zero cloud dependencies, and zero background analytics.
 
 ---
 
 ## Core Features
 
-- 💧 **Unignorable Desktop Traversal:** 60 FPS transparent video overlay walking across your screen without minimizing active applications.
-- ⚡ **Zero-Latency Escalation:** Click interception triggers motivational reaction memes (*"You Have To Do It!"*, *"What's Wrong With You?!"*) with exact frame-freeze and resume.
-- 🛡️ **100% Offline & Privacy-First:** Zero cloud services, zero external telemetry, zero tracking. All settings and hydration intake logs are stored locally in Dexie IndexedDB.
-- 🕒 **Main-Process Scheduling Engine:** Reliable timer lifecycle managed in the Electron main process, immune to background renderer throttling and resilient across system sleep/wake cycles.
-- 🖥️ **Multi-Monitor & DPI Aware:** Automatically detects Windows work area geometry, accounts for taskbar docking, and anchors cleanly to your primary display.
-- 🚀 **Windows Integration:** Single-instance locking (focuses existing window on duplicate launch), optional silent startup with Windows, and local rotating diagnostic logs.
+* **Transparent Desktop Traversal:** Native hardware-accelerated VP9 alpha-channel WebM playback with full sub-pixel transparency and GPU compositing.
+* **Non-Disruptive Focus Management:** Window level set to `screen-saver` with `focusable: false` so active code editors, IDEs, terminals, and games never lose keyboard focus.
+* **Dismissal Interception:** Multi-tier reaction system (`Level 0` gentle prompt through `Level 2` insistent intervention) for users who attempt to dismiss reminders repeatedly.
+* **Control Dashboard:** Compact window (520×760) featuring interval configuration (5–60 min), live countdown, daily intake logging, and on-demand manual test triggers.
+* **Local Persistence:** Daily hydration history and streak tracking stored locally on disk via SQLite / Dexie.js.
+* **Zero Overhead Idle:** The transparent overlay remains dormant and unrendered until invoked by the timer loop.
+
+---
+
+## Technical Architecture
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   Electron Main Process                │
+│   (Loopback HTTP Server, Process Management, Window IPC)│
+└───────────────┬────────────────────────┬───────────────┘
+                │                        │
+       BroadcastChannel          BroadcastChannel
+                │                        │
+                ▼                        ▼
+┌──────────────────────────────┐  ┌──────────────────────────────┐
+│       Dashboard Window       │  │   Transparent Overlay Window │
+│  - Timer & Schedule Controls │  │  - Fullscreen borderless      │
+│  - Intake Metrics & History  │  │  - alwaysOnTop (screen-saver)│
+│  - React 18 / Zustand Store  │  │  - Alpha-channel VP9 Player  │
+└──────────────────────────────┘  └──────────────────────────────┘
+```
+
+### Video Pipeline (VP9 + Alpha)
+Transparent rendering is achieved via WebM containers encoded with VP9 and an 8-bit alpha channel. Coordinates are synchronized via `requestAnimationFrame` against `video.currentTime`, allowing millisecond-accurate pauses and resume-points during user click events.
+
+### Local Loopback Server
+Electron's internal `file://` protocol lacks support for standard byte-range requests (`HTTP 206 Partial Content`), causing stuttering when seeking high-bitrate WebM files. The main process binds a lightweight HTTP server strictly to `127.0.0.1` on a dynamic ephemeral port to handle range requests and streaming buffer allocation.
+
+### Window Levels & Focus Flags
+The overlay window uses:
+* `transparent: true`, `frame: false`, `hasShadow: false`
+* `alwaysOnTop: true`, level: `'screen-saver'`
+* Chromium flag: `--autoplay-policy=no-user-gesture-required` (enables audio playback on scheduled triggers without requiring initial user focus)
 
 ---
 
 ## System Requirements
 
-- **Operating System:** Windows 10 (Build 14316 or higher) or Windows 11 (64-bit)
-- **Architecture:** x64
-- **Runtime Dependencies:** None required (standalone bundled Electron runtime)
+* **OS:** Windows 10 or Windows 11 (64-bit)
+* **Architecture:** x64
+* **Memory:** 150 MB RAM (idle)
+* **Disk Space:** ~250 MB installed
 
 ---
 
-## Getting Started (Development)
+## Installation & Deployment
 
-### 1. Prerequisites
-- [Node.js](https://nodejs.org/) v18.0.0 or higher
-- npm v9.0.0 or higher
+### Pre-Built Installer
+Download the verified setup executable from releases:
+* **Installer:** `LOCKIN_Setup_x64.exe` (Inno Setup 6 package with automatic silent install `/VERYSILENT` support)
+* **Default Directory:** `%LOCALAPPDATA%\Programs\Water Reminder (Meme Edition)` (per-user) or `C:\Program Files` (per-machine elevated)
 
-### 2. Installation
+---
+
+## Development Setup
+
+### Prerequisites
+* Node.js v18.0.0 or higher
+* npm v9.0.0 or higher
+* Inno Setup 6 (optional, required only for compiling setup installers)
+
+### Clone & Install
 ```bash
 git clone https://github.com/tanmayybuilds/Creative_Water_reminder.git
 cd Creative_Water_reminder
 npm install
 ```
 
-### 3. Running in Development
-Start Vite development bundler and launch the Electron application:
+### Run Locally
 ```bash
 npm run dev
 ```
 
----
-
-## Automated Testing
-
-The codebase includes 15 automated unit, integration, and security test suites totaling over 1,000 passed assertions.
-
-Run the complete test suite:
-```bash
-npm test
-```
-
-### Key Test Suites:
-- `tests/productionHardening.test.ts`: Main process timer lifecycle, sleep/wake resync, path traversal security, multi-monitor clamping, Dexie schema v3, and single instance lock.
-- `tests/desktopWaterReminder.test.ts`: Complete reminder loop, coordinate math across 1080p, 1440p, 4K, and laptop displays, single-fire guards, and interruption escalation.
-- `tests/transparentPipeline.test.ts`: VP9 WebM alpha channel stream verification, audio sync (Opus), and duration checks.
-- `tests/movementProfiles.test.ts`: Cubic bezier easing calculations and kinetic traversal trajectories.
-- `tests/behaviorEngine.test.ts`: Multi-stage user intervention state transitions and anti-infinite-loop guards.
-
----
-
-## Production Packaging & Distribution
-
-### 1. Microsoft Store Package (MSIX / AppX)
-The primary release artifact for Microsoft Store / Partner Center ingestion:
-
-```bash
-npm run build:store
-```
-
-**Artifacts Generated in `release/`:**
-- `release/Water Reminder (Meme Edition) 1.0.0.appx` (224.18 MB)
-- `release/LOCKIN-1.0.0-x64.msix` (224.18 MB)
-- `release/checksums/SHA256SUMS.txt`
-- `release/release-notes/RELEASE_NOTES_v1.0.0.md`
-- `release/validation-report/WACK_STORE_REPORT.md`
-
-### 2. Standalone Windows Setup Installer (Direct EXE)
-For direct website or GitHub release distribution:
-
+### Build Production Deliverables
 ```bash
 npm run build:exe
 ```
-
-**Artifacts Generated:**
-- `release/LOCKIN_Setup_x64.exe` (196.56 MB Setup Wizard with `/VERYSILENT` support)
-- `LOCKIN_Windows_x64.zip` (Portable standalone archive)
+This script executes:
+1. `tsc && vite build` — compiles TypeScript and bundles the client into `dist/`.
+2. Assembles the standalone runtime into `release/bundle/`.
+3. Patches the PE resources (`FileVersion`, `ProductName`, `CompanyName`, production icon) via `rcedit`.
+4. Compiles `LOCKIN_Setup_x64.exe` via Inno Setup.
 
 ---
 
-## Production Architecture
+## Test Suites
 
-For comprehensive technical specifications, refer to the documentation:
-- [Production Architecture Guide](docs/ARCHITECTURE_PRODUCTION.md)
-- [Production Audit & Vulnerability Report](docs/PRODUCTION_AUDIT.md)
-- [Microsoft Store Submission Manual](docs/MICROSOFT_STORE_SUBMISSION.md)
-- [Privacy Policy](docs/PRIVACY.md)
-- [Third-Party Software & Asset Notices](docs/THIRD_PARTY_NOTICES.md)
-- [Release Checklist](docs/RELEASE_CHECKLIST.md)
-- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+The test suite validates the reminder lifecycle, finite state machine transitions, coordinate mathematics, and asset integrity:
+
+```bash
+# Run all automated tests
+npm test
+
+# Run the watcher suite during active development
+npm run test:watch
+```
+
+Key test coverage:
+* `tests/desktopWaterReminder.test.ts`: Timer state transitions, interval triggers, and IPC broadcast events.
+* `tests/behaviorEngine.test.ts`: Dismissal counter escalation and behavioral response selection.
+* `tests/movementProfiles.test.ts`: Coordinate calculation and easing curves across multiple screen resolutions.
+* `tests/transparentPipeline.test.ts`: WebM alpha-channel asset presence, bitrate boundaries, and fallback handling.
+
+---
+
+## Repository Structure
+
+```
+Creative_Water_reminder/
+├── electron/
+│   ├── main.cjs                # Main process: multi-window lifecycle & loopback server
+│   └── preload.cjs             # Context isolation bridge
+├── installer/
+│   └── LockinInstaller.iss     # Inno Setup 6 configuration
+├── public/
+│   ├── icon.ico                # Multi-resolution icon (16x16 to 256x256)
+│   └── memes/processed/        # VP9 transparent WebM assets
+├── scripts/
+│   ├── package_app.cjs         # Release packaging and PE binary resource patching
+│   └── process_meme.py         # Offline video rotoscoping and WebM compilation tool
+├── src/
+│   ├── app/                    # Root entry and mode switching (dashboard vs overlay)
+│   ├── features/
+│   │   ├── memes/              # Behavior engine, state stores, and fixtures
+│   │   └── waterReminder/      # Core timer, overlay controls, and movement geometry
+│   └── database/               # Local persistence layer
+├── tests/                      # Automated TypeScript test suites
+├── package.json
+└── vite.config.ts
+```
+
+---
+
+## Privacy & Security
+
+* **No Network Egress:** The application never initiates external network requests. All HTTP traffic is bound strictly to `127.0.0.1` (local loopback) for media streaming.
+* **No Telemetry:** No user analytics, error tracking, or session metrics are collected or transmitted.
+* **Local Data Storage:** All daily hydration metrics and settings are stored locally on your device in standard browser IndexedDB / SQLite storage.
 
 ---
 
 ## License
 
-This project is open-source and licensed under the [MIT License](LICENSE).
-Media clips are utilized for transformative, non-profit satirical commentary under fair use doctrines.
+This software is released under the [MIT License](LICENSE).

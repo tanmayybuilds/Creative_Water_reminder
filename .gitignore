@@ -73,3 +73,5 @@ debug.log
 Thumbs.db
 .vscode/
 .idea/
+certs/
+temp_extract/
